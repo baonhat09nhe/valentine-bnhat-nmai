@@ -589,7 +589,7 @@
                             'img/img38.jpg', 'img/img39.jpg', 'img/img40.jpg', 'img/img41.jpg'
                         ];
 
-        const planetImageFile = 'img/imgMain.jpg'; 
+        // const planetImageFile = 'img/imgMain.jpg'; // Đã thay thế bằng video.mp4
 
         const atlasTex = new THREE.Texture();
         atlasTex.encoding = THREE.sRGBEncoding;
@@ -740,16 +740,28 @@
         p.rotation.z = 0.2;
         scene.add(p)
         
+        // Tạo video element để làm texture
+        const video = document.createElement('video');
+        video.src = 'video.mp4';
+        video.loop = true;
+        video.muted = true;
+        video.setAttribute('playsinline', '');
+        video.setAttribute('webkit-playsinline', '');
+        video.style.display = 'none';
+        document.body.appendChild(video);
+        window.planetVideo = video; // Lưu lại để play khi cần
+        video.play();
+
         const planetGeometry = new THREE.SphereGeometry(6, 64, 64); 
-        const planetTexture = new THREE.TextureLoader().load(planetImageFile, (tex) => {
-            tex.encoding = THREE.sRGBEncoding;
-            tex.wrapS = THREE.RepeatWrapping;
-            tex.repeat.set(2, 1);
-        });
+        const planetTexture = new THREE.VideoTexture(video);
+        planetTexture.encoding = THREE.sRGBEncoding;
+        planetTexture.wrapS = THREE.RepeatWrapping;
+        planetTexture.repeat.set(2, 1); // Hiển thị 2 lần quanh vòng tròn (mỗi mặt 1 video full)
+        
         const planetMaterial = new THREE.MeshStandardMaterial({
             map: planetTexture,
             emissive: new THREE.Color('#ffffff'), 
-            emissiveIntensity: 0.3, 
+            emissiveIntensity: 0.2, 
             metalness: 0.1,
             roughness: 0.5,
             transparent: false,
@@ -810,6 +822,10 @@
             if (!animationStarted) {
                 animationStarted = true;
                 clock = new THREE.Clock();
+
+                if (window.planetVideo) {
+                    window.planetVideo.play().catch(e => console.log("Video play error:", e));
+                }
                 
                 const canvas = document.getElementById('galaxyCanvas');
                 if (canvas) canvas.classList.add('show');
