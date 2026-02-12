@@ -544,7 +544,9 @@
         camera.position.set(0, 10, 55); // Zoom out để thấy toàn bộ dải ngân hà
         let renderer = new THREE.WebGLRenderer({
             antialias: true,
-            alpha: false
+            alpha: false,
+            logarithmicDepthBuffer: true, // Giúp giải quyết lỗi Z-fighting (chớp hình) trên mobile
+            precision: "highp"            // Tăng độ chính xác cho GPU di động
         });
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(innerWidth, innerHeight);
@@ -702,7 +704,8 @@
             transparent: true,
             opacity: 1.0, 
             depthTest: true,
-            depthWrite: false, 
+            depthWrite: true, // Chuyển sang true và kết hợp alphaTest để xử lý chiều sâu tốt hơn trên mobile
+            alphaTest: 0.5,   // Loại bỏ các pixel trong suốt để tránh hiện tượng chồng lấp gây chớp
             blending: THREE.NormalBlending
         });
 
