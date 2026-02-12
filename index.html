@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta author="">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vũ trụ</title>
+    <!-- Import Map để xử lý lỗi resolve module "three" -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.136.0/build/three.module.js",
+                "three/examples/jsm/controls/OrbitControls": "https://unpkg.com/three@0.136.0/examples/jsm/controls/OrbitControls.js"
+            }
+        }
+    </script>
+</head>
+<style>
+    body {
+        overflow: hidden;
+        margin: 0;
+        font-family: Arial, sans-serif;
+    }
+
+    #word img {
+        width: 100px;
+        position: absolute;
+        margin: 10;
+    }
+
+    /* Password Screen */
+    #passwordScreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: linear-gradient(135deg, #ffd1dc 0%, #ffb6c1 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    #passwordScreen.hidden {
+        display: none;
+    }
+
+    .password-container {
+        text-align: center;
+    }
+
+    .password-title {
+        color: #d4579c;
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        letter-spacing: 2px;
+        transition: all 0.3s ease;
+        min-height: 25px;
+    }
+
+    .password-title.error {
+        color: #ff1744;
+        animation: titlePulse 0.5s;
+    }
+
+    @keyframes titlePulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    .password-input {
+        width: 200px;
+        padding: 10px;
+        border: 2px solid #ff9fc9;
+        border-radius: 25px;
+        text-align: center;
+        font-size: 16px;
+        margin-bottom: 20px;
+        outline: none;
+    }
+
+    .user-image {
+        width: 80px;
+        height: 80px;
+        border-radius: 15px;
+        margin-bottom: 20px;
+        object-fit: cover;
+    }
+
+    .number-pad {
+        display: grid;
+        grid-template-columns: repeat(3, 60px);
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .number-btn {
+        width: 60px;
+        height: 60px;
+        border: none;
+        background: white;
+        border-radius: 10px;
+        font-size: 20px;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: transform 0.1s;
+    }
+
+    .number-btn:hover {
+        transform: scale(1.05);
+    }
+
+    .number-btn:active {
+        transform: scale(0.95);
+    }
+
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+    }
+
+    .delete-btn, .submit-btn {
+        width: 50px;
+        height: 50px;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 20px;
+        transition: transform 0.1s;
+    }
+
+    .delete-btn {
+        background: #ff6b9d;
+        color: white;
+    }
+
+    .submit-btn {
+        background: #85d1a8;
+        color: white;
+    }
+
+    .delete-btn:hover, .submit-btn:hover {
+        transform: scale(1.1);
+    }
+
+    /* Shake animation for password container */
+    @keyframes containerShake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        50% { transform: translateX(10px); }
+        75% { transform: translateX(-10px); }
+    }
+
+    /* Transition Image */
+    #transitionImage {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        max-width: 60%;
+        max-height: 60%;
+        z-index: 999;
+        display: none;
+        border-radius: 20px;
+        box-shadow: 0 0 60px rgba(255, 105, 180, 0.9),
+                    0 0 100px rgba(255, 20, 147, 0.6),
+                    inset 0 0 30px rgba(255, 255, 255, 0.3);
+        filter: brightness(1.1);
+    }
+
+    #transitionImage.show {
+        display: block;
+        animation: imageGlow 2s ease-in-out infinite;
+    }
+
+    @keyframes imageGlow {
+        0%, 100% { filter: brightness(1.1) drop-shadow(0 0 20px rgba(255, 105, 180, 0.8)); }
+        50% { filter: brightness(1.2) drop-shadow(0 0 40px rgba(255, 20, 147, 1)); }
+    }
+
+    /* Valentine Hearts */
+    .heart {
+        position: fixed;
+        width: 20px;
+        height: 20px;
+        background: linear-gradient(45deg, #ff69b4, #ff1493);
+        transform: rotate(45deg);
+        z-index: 998;
+        pointer-events: none;
+        animation: floatHeart 4s ease-in forwards;
+        opacity: 0.9;
+    }
+
+    .heart:before,
+    .heart:after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: inherit;
+        border-radius: 50%;
+    }
+
+    .heart:before {
+        left: -10px;
+    }
+
+    .heart:after {
+        top: -10px;
+    }
+
+    @keyframes floatHeart {
+        0% {
+            transform: translateY(0) translateX(0) rotate(45deg) scale(0.5);
+            opacity: 0;
+        }
+        10% {
+            opacity: 0.9;
+        }
+        90% {
+            opacity: 0.8;
+        }
+        100% {
+            transform: translateY(-100vh) translateX(var(--drift)) rotate(45deg) scale(0);
+            opacity: 0;
+        }
+    }
+
+    /* Sparkle Effect */
+    .sparkle {
+        position: fixed;
+        width: 4px;
+        height: 4px;
+        background: white;
+        border-radius: 50%;
+        z-index: 998;
+        pointer-events: none;
+        animation: sparkleAnim 1.5s ease-out forwards;
+        box-shadow: 0 0 10px white;
+    }
+
+    @keyframes sparkleAnim {
+        0% {
+            opacity: 1;
+            transform: scale(0) translateY(0);
+        }
+        50% {
+            opacity: 1;
+            transform: scale(1.5) translateY(-30px);
+        }
+        100% {
+            opacity: 0;
+            transform: scale(0) translateY(-60px);
+        }
+    }
+
+    #galaxyCanvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: #160016;
+        display: none;
+        z-index: 10;
+        pointer-events: all;
+    }
+
+    #galaxyCanvas.show {
+        display: block;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .password-title {
+            font-size: 14px;
+        }
+        
+        .password-input {
+            width: 160px;
+            font-size: 14px;
+        }
+        
+        .user-image {
+            width: 60px;
+            height: 60px;
+        }
+        
+        .number-btn {
+            width: 50px;
+            height: 50px;
+            font-size: 18px;
+        }
+        
+        .number-pad {
+            grid-template-columns: repeat(3, 50px);
+            gap: 8px;
+        }
+        
+        #transitionImage {
+            max-width: 80%;
+            max-height: 80%;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .password-title {
+            font-size: 12px;
+        }
+        
+        .number-btn {
+            width: 45px;
+            height: 45px;
+            font-size: 16px;
+        }
+        
+        .number-pad {
+            grid-template-columns: repeat(3, 45px);
+        }
+    }
+</style>
+
+<body>
+    <!-- Password Screen -->
+    <div id="passwordScreen">
+        <div class="password-container">
+            <div class="password-title">NHẬP PASS DI NGƯỜI ĐẸP</div>
+            <input type="password" class="password-input" id="passwordInput" placeholder="Enter password" readonly>
+            <div>
+                <img src="img/img99.jpg" alt="User" class="user-image" id="userImage">
+            </div>
+            <div class="number-pad">
+                <button class="number-btn" onclick="addNumber(1, event)">1</button>
+                <button class="number-btn" onclick="addNumber(2, event)">2</button>
+                <button class="number-btn" onclick="addNumber(3, event)">3</button>
+                <button class="number-btn" onclick="addNumber(4, event)">4</button>
+                <button class="number-btn" onclick="addNumber(5, event)">5</button>
+                <button class="number-btn" onclick="addNumber(6, event)">6</button>
+                <button class="number-btn" onclick="addNumber(7, event)">7</button>
+                <button class="number-btn" onclick="addNumber(8, event)">8</button>
+                <button class="number-btn" onclick="addNumber(9, event)">9</button>
+                <button class="number-btn" onclick="addNumber(0, event)" style="grid-column: 2;">0</button>
+            </div>
+            <div class="action-buttons">
+                <button class="delete-btn" onclick="deleteNumber()">✕</button>
+                <button class="submit-btn" onclick="checkPassword()">✓</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transition Image -->
+    <img id="transitionImage" src="img.png" alt="Transition">
+
+    <div id="word">
+        <a href="">
+            <img width="300" src="" title="" />
+        </a>
+    </div>
+
+    <script>
+        // Password functionality
+        let passwordValue = '';
+        const correctPassword = '123456'; // Đổi mật khẩu tại đây
+        
+        // Mảng các câu thông báo khi nhập sai
+        const errorMessages = [
+            'Sai rồi người đẹp, không nhớ hả?',
+            'Ơ hay, quên rồi à?',
+            'Thử lại xem nào baby!',
+            'Hmm... chưa đúng đấy!',
+            'Sao không nhớ mật khẩu của mình?',
+            'Gần đúng rồi, thử lại nào!',
+            'Nghĩ kỹ hơn xem nào!'
+        ];
+        let errorCount = 0;
+        const defaultTitle = 'NHẬP PASS DI NGƯỜI ĐẸP';
+
+        function addNumber(num, event) {
+            if (passwordValue.length < 10) {
+                passwordValue += num;
+                document.getElementById('passwordInput').value = '•'.repeat(passwordValue.length);
+                if (event) createClickHeart(event);
+            }
+        }
+
+        function createClickHeart(e) {
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+            // Kích thước như lúc transition
+            heart.style.width = '20px';
+            heart.style.height = '20px';
+            
+            // Vị trí click
+            const x = e.clientX || (e.touches && e.touches[0].clientX);
+            const y = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            heart.style.left = (x - 10) + 'px';
+            heart.style.top = (y - 10) + 'px';
+            heart.style.setProperty('--drift', (Math.random() - 0.5) * 200 + 'px');
+            
+            // Sử dụng đúng animation floatHeart của transition
+            heart.style.animation = 'floatHeart 3s ease-in forwards';
+            
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 3000);
+        }
+
+        function deleteNumber() {
+            passwordValue = passwordValue.slice(0, -1);
+            document.getElementById('passwordInput').value = '•'.repeat(passwordValue.length);
+        }
+
+        function checkPassword() {
+            if (passwordValue === correctPassword) {
+                startTransition();
+            } else {
+                const titleElement = document.querySelector('.password-title');
+                const container = document.querySelector('.password-container');
+                
+                container.style.animation = 'containerShake 0.5s';
+                titleElement.classList.add('error');
+                
+                // Hiển thị lỗi và giữ nguyên, không quay lại mặc định
+                if (errorCount < errorMessages.length) {
+                    titleElement.textContent = errorMessages[errorCount];
+                    errorCount++;
+                } else {
+                    titleElement.textContent = errorMessages[errorMessages.length - 1];
+                }
+                
+                // Reset form nhập liệu ngay lập tức
+                passwordValue = '';
+                document.getElementById('passwordInput').value = '';
+                
+                setTimeout(() => {
+                    container.style.animation = '';
+                    titleElement.classList.remove('error');
+                }, 1000);
+            }
+        }
+
+        function startTransition() {
+            const passwordScreen = document.getElementById('passwordScreen');
+            const transitionImg = document.getElementById('transitionImage');
+            
+            // Hide password screen
+            passwordScreen.classList.add('hidden');
+            
+            // Show transition image with valentine effects
+            transitionImg.classList.add('show');
+            createValentineEffects();
+            
+            // Shake animation
+            setTimeout(() => {
+                transitionImg.style.animation = 'shake 0.5s ease-in-out 3';
+            }, 100);
+            
+            // Break into pieces
+            setTimeout(() => {
+                breakIntoPieces();
+            }, 2500);
+        }
+        
+        function createValentineEffects() {
+            // Create floating hearts
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    const heart = document.createElement('div');
+                    heart.className = 'heart';
+                    const leftPos = Math.random() * 100;
+                    heart.style.left = leftPos + 'vw';
+                    heart.style.bottom = '0';
+                    heart.style.setProperty('--drift', (Math.random() - 0.5) * 200 + 'px');
+                    heart.style.animationDelay = Math.random() * 0.5 + 's';
+                    heart.style.animationDuration = (Math.random() * 2 + 3) + 's';
+                    document.body.appendChild(heart);
+                    
+                    setTimeout(() => heart.remove(), 6000);
+                }, i * 80);
+            }
+            
+            // Create sparkles around image
+            const sparkleInterval = setInterval(() => {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                sparkle.style.left = (50 + (Math.random() - 0.5) * 40) + '%';
+                sparkle.style.top = (50 + (Math.random() - 0.5) * 40) + '%';
+                document.body.appendChild(sparkle);
+                
+                setTimeout(() => sparkle.remove(), 1500);
+            }, 100);
+            
+            setTimeout(() => clearInterval(sparkleInterval), 2500);
+        }
+
+        function breakIntoPieces() {
+            const transitionImg = document.getElementById('transitionImage');
+            transitionImg.style.transition = 'all 1s ease-out';
+            transitionImg.style.opacity = '0';
+            transitionImg.style.transform = 'translate(-50%, -50%) scale(2)';
+            
+            // Start galaxy animation
+            setTimeout(() => {
+                transitionImg.classList.remove('show');
+                const canvas = document.getElementById('galaxyCanvas');
+                if (canvas) {
+                    canvas.classList.add('show');
+                }
+                if (typeof window.initGalaxy === 'function') {
+                    window.initGalaxy();
+                } else {
+                    console.error('initGalaxy is not defined yet');
+                }
+            }, 1000);
+        }
+
+        // Shake animation
+        const shakeStyle = document.createElement('style');
+        shakeStyle.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+                25% { transform: translate(-50%, -50%) rotate(-5deg); }
+                75% { transform: translate(-50%, -50%) rotate(5deg); }
+            }
+        `;
+        document.head.appendChild(shakeStyle);
+    </script>
+
+    <script type="module">
+        import * as THREE from "three";
+        import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+
+        var defined = 'QXV0aG9yOiBMdWMg';
+        var datacenter = ['aHR0cHM6L', 'y93d3cuZmF', 'jZWJvb2suY29t'];
+        let scene = new THREE.Scene();
+        scene.background = new THREE.Color('#160016');
+        let camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 1, 1000);
+        camera.position.set(0, 10, 55); // Zoom out để thấy toàn bộ dải ngân hà
+        let renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: false
+        });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(innerWidth, innerHeight);
+        renderer.domElement.id = 'galaxyCanvas';
+        document.body.appendChild(renderer.domElement);
+        
+        window.addEventListener("resize", event => {
+            camera.aspect = innerWidth / innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(innerWidth, innerHeight);
+        })
+        datacenter.push('L3Byb2ZpbGUu');
+        let controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.enablePan = false;
+        datacenter.push('cGhwP2lkPTEw');
+        let gu = {
+            time: { value: 0 }
+        }
+        defined = defined.concat('VGhpZW4gUGhvbmc=');
+        let sizes = [];
+        let shift = [];
+        let pushShift = () => {
+            shift.push(
+                Math.random() * Math.PI,
+                Math.random() * Math.PI * 2,
+                (Math.random() * 0.9 + 0.1) * Math.PI * 0.1,
+                Math.random() * 0.9 + 0.1
+            );
+        }
+        datacenter.push('MDA0NTQwNj');
+        var context = atob(defined);
+
+        // Giảm mật độ hạt (ảnh) để thưa thớt và dễ nhìn hơn, đặc biệt trên mobile
+        const INNER_RADIUS = 20; 
+        const OUTER_RADIUS = 55;
+        const SHELL_COUNT = 800;  // Giảm từ 2200
+        const DISK_COUNT = 1600;  // Giảm từ 10000
+
+        let pts = new Array(SHELL_COUNT).fill().map(() => {
+            sizes.push(Math.random() * 1.2 + 0.35);
+            pushShift();
+            return new THREE.Vector3().randomDirection().multiplyScalar(INNER_RADIUS + Math.random() * 2.0);
+        });
+        for (let i = 0; i < DISK_COUNT; i++) {
+            let r = INNER_RADIUS, R = OUTER_RADIUS;
+            let rand = Math.pow(Math.random(), 1.5);
+            let radius = Math.sqrt(R * R * rand + (1 - rand) * r * r);
+            pts.push(new THREE.Vector3().setFromCylindricalCoords(radius, Math.random() * 2 * Math.PI, (Math.random() - 0.5) * 2));
+            sizes.push(Math.random() * 1.2 + 0.35);
+            pushShift();
+        }
+        console.log(context);
+        datacenter.push('I2MTQ5MQ' + '==');
+        let g = new THREE.BufferGeometry().setFromPoints(pts);
+        g.setAttribute("sizes", new THREE.Float32BufferAttribute(sizes, 1));
+        g.setAttribute("shift", new THREE.Float32BufferAttribute(shift, 4));
+
+        // Support multiple images: provide file names in this array (put files in same folder)
+        const imageFiles = ['/img/img1.jpg', '/img/img2.jpg', '/img/img3.jpg', '/img/img4.jpg', '/img/img5.jpg', '/img/img6.jpg', '/img/img7.jpg',
+                            '/img/img8.jpg', '/img/img9.jpg', '/img/img10.jpg', '/img/img11.jpg', '/img/img12.jpg', '/img/img13.jpg',
+                            '/img/img14.jpg', '/img/img15.jpg', '/img/img16.jpg', '/img/img17.jpg', '/img/img18.jpg', '/img/img19.jpg', 
+                            '/img/img20.jpg', '/img/img21.jpg', '/img/img22.jpg', '/img/img23.jpg', '/img/img24.jpg', '/img/img25.jpg',
+                            '/img/img26.jpg', '/img/img27.jpg', '/img/img28.jpg', '/img/img29.jpg', '/img/img30.jpg', '/img/img31.jpg',
+                            '/img/img32.jpg', '/img/img33.jpg', '/img/img34.jpg', '/img/img35.jpg', '/img/img36.jpg', '/img/img37.jpg',
+                            '/img/img38.jpg', '/img/img39.jpg', '/img/img40.jpg', '/img/img41.jpg'
+                        ];
+
+        // Use imgMain for the central planet
+        const planetImageFile = '/img/imgMain.jpg'; 
+
+        // Build an atlas texture placeholder; we'll draw images into it when loaded
+        const atlasTex = new THREE.Texture();
+        atlasTex.encoding = THREE.sRGBEncoding;
+
+        // Precompute texIndex per point (randomly select image index for each point)
+        const nImages = imageFiles.length;
+        let texIndices = new Float32Array(pts.length);
+        for (let i = 0; i < texIndices.length; i++) texIndices[i] = Math.floor(Math.random() * nImages);
+        g.setAttribute('texIndex', new THREE.Float32BufferAttribute(texIndices, 1));
+
+        // Load images and create atlas canvas
+        const tileSize = 256; // larger tile for better detail
+        const cols = Math.ceil(Math.sqrt(nImages));
+        const rows = Math.ceil(nImages / cols);
+        const atlasCanvas = document.createElement('canvas');
+        atlasCanvas.width = cols * tileSize;
+        atlasCanvas.height = rows * tileSize;
+        const atlasCtx = atlasCanvas.getContext('2d');
+
+        // configure atlas texture properties for crisp sampling
+        atlasTex.flipY = true;
+        atlasTex.minFilter = THREE.LinearFilter;
+        atlasTex.magFilter = THREE.LinearFilter;
+        atlasTex.generateMipmaps = false;
+
+        let loaded = 0;
+        let successfulIndices = [];
+        
+        imageFiles.forEach((fn, idx) => {
+            new THREE.ImageLoader().load(fn, img => {
+                const col = idx % cols;
+                const row = Math.floor(idx / cols);
+                const x = col * tileSize;
+                const y = row * tileSize;
+                atlasCtx.clearRect(x, y, tileSize, tileSize);
+                const imgRatio = img.width / img.height;
+                let dw, dh, dx, dy;
+                
+                // Chế độ "contain": Giữ nguyên tỉ lệ ảnh gốc, không bị cắt xén
+                if (imgRatio > 1) { // Ảnh ngang
+                    dw = tileSize;
+                    dh = tileSize / imgRatio;
+                    dx = x;
+                    dy = y + (tileSize - dh) / 2;
+                } else { // Ảnh dọc hoặc vuông
+                    dh = tileSize;
+                    dw = tileSize * imgRatio;
+                    dx = x + (tileSize - dw) / 2;
+                    dy = y;
+                }
+                atlasCtx.drawImage(img, dx, dy, dw, dh);
+
+                successfulIndices.push(idx);
+                loaded++;
+                if (loaded === nImages) {
+                    finalizeAtlas();
+                }
+            }, undefined, err => {
+                console.warn('Skipping missing image:', fn);
+                loaded++;
+                if (loaded === nImages) {
+                    finalizeAtlas();
+                }
+            });
+        });
+
+        function finalizeAtlas() {
+            if (successfulIndices.length > 0) {
+                const texIndicesArr = g.attributes.texIndex.array;
+                for (let i = 0; i < texIndicesArr.length; i++) {
+                    const randIdx = Math.floor(Math.random() * successfulIndices.length);
+                    texIndicesArr[i] = successfulIndices[randIdx];
+                }
+                g.attributes.texIndex.needsUpdate = true;
+            }
+            atlasTex.image = atlasCanvas;
+            atlasTex.needsUpdate = true;
+            console.log('Atlas ready. Successful images:', successfulIndices.length);
+        }
+
+        let m = new THREE.PointsMaterial({
+            // Tự động điều chỉnh kích thước ảnh dựa trên chiều rộng màn hình (Responsive)
+            size: window.innerWidth < 768 ? 1.8 : 2.5, 
+            transparent: true,
+            opacity: 1.0, 
+            depthTest: true,
+            depthWrite: false, 
+            blending: THREE.NormalBlending
+        });
+
+        m.onBeforeCompile = shader => {
+            shader.uniforms.time = gu.time;
+            shader.uniforms.uAtlas = { value: atlasTex };
+            shader.uniforms.atlasCols = { value: cols };
+            shader.uniforms.atlasRows = { value: rows };
+
+            shader.vertexShader = `
+                uniform float time;
+                attribute float sizes;
+                attribute vec4 shift;
+                attribute float texIndex;
+                varying vec3 vColor;
+                varying float vTexIndex;
+                ${shader.vertexShader}
+            `.replace(
+                `gl_PointSize = size;`,
+                `gl_PointSize = size * sizes;`
+            ).replace(
+                `#include <color_vertex>`,
+                `#include <color_vertex>
+                float d = length(abs(position) / vec3(40., 10., 40));
+                d = clamp(d, 0., 1.);
+                vColor = mix(vec3(42,40,154), vec3(209,124,196), d) / 255.;
+            `).replace(
+                    `#include <begin_vertex>`,
+                    `#include <begin_vertex>
+                float t = time;
+                float moveT = mod(shift.x + shift.z * t, PI2);
+                float moveS = mod(shift.y + shift.z * t, PI2);
+                transformed += vec3(cos(moveS) * sin(moveT), cos(moveT), sin(moveS) * sin(moveT)) * shift.a;
+                vTexIndex = texIndex;
+            `);
+
+            shader.fragmentShader = `
+            varying vec3 vColor;
+            varying float vTexIndex;
+            uniform sampler2D uAtlas;
+            uniform float atlasCols;
+            uniform float atlasRows;
+            ${shader.fragmentShader}
+            `.replace(
+                `#include <clipping_planes_fragment>`,
+                `#include <clipping_planes_fragment>
+                float idx = vTexIndex;
+                float col = mod(idx, atlasCols);
+                float row = floor(idx / atlasCols);
+                vec2 localUV = vec2(gl_PointCoord.x, 1.0 - gl_PointCoord.y);
+                vec2 uv = (vec2(col, row) + localUV) / vec2(atlasCols, atlasRows);
+                vec4 texColor = texture2D(uAtlas, uv);
+                
+                // Loại bỏ vùng trống để giữ đúng tỉ lệ ảnh gốc
+                if(texColor.a < 0.1) discard;
+            `).replace(
+                    `vec4 diffuseColor = vec4( diffuse, opacity );`,
+                    `vec3 colr = texColor.rgb; 
+                    // Giữ nguyên màu sắc gốc của ảnh
+                    vec4 diffuseColor = vec4( colr, texColor.a * opacity );`
+                );
+        };
+        let p = new THREE.Points(g, m);
+        p.rotation.order = "ZYX";
+        p.rotation.z = 0.2;
+        scene.add(p)
+        
+        // Tạo hành tinh ở trung tâm - Hiển thị toàn bộ hình cầu bằng cách lặp lại ảnh
+        const planetGeometry = new THREE.SphereGeometry(6, 64, 64); 
+        const planetTexture = new THREE.TextureLoader().load(planetImageFile, (tex) => {
+            tex.encoding = THREE.sRGBEncoding;
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.repeat.set(2, 1); // Lặp lại ảnh 2 lần để phủ kín 2 mặt cầu
+        });
+        const planetMaterial = new THREE.MeshStandardMaterial({
+            map: planetTexture,
+            emissive: new THREE.Color('#ffffff'), 
+            emissiveIntensity: 0.3, 
+            metalness: 0.1,
+            roughness: 0.5,
+            transparent: false,
+            opacity: 1.0,
+            side: THREE.DoubleSide // Vẽ cả 2 mặt để tránh lỗ hổng khi nhìn nghiêng
+        });
+        const planet = new THREE.Mesh(planetGeometry, planetMaterial);
+        // Quay mặt ảnh về phía camera ban đầu
+        planet.rotation.y = -Math.PI / 2;
+        scene.add(planet);
+        
+        // Thêm vòng ánh sáng xung quanh hành tinh
+        const glowGeometry = new THREE.SphereGeometry(6.4, 32, 32); // Tăng khớp với hành tinh
+        const glowMaterial = new THREE.MeshBasicMaterial({
+            color: '#ff69b4',
+            transparent: true,
+            opacity: 0.2, // Tăng chút độ mờ cho nổi bật
+            side: THREE.BackSide
+        });
+        const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+        scene.add(glow);
+        
+        // Thêm các vòng quay đan xen như hình mẫu (kiểu nguyên tử/Saturn nâng cao)
+        const createRing = (inner, outer, rx, ry, opacity) => {
+            const geom = new THREE.RingGeometry(inner, outer, 64);
+            const mat = new THREE.MeshBasicMaterial({
+                color: '#ff69b4',
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: opacity
+            });
+            const mesh = new THREE.Mesh(geom, mat);
+            mesh.rotation.x = rx;
+            mesh.rotation.y = ry;
+            scene.add(mesh);
+            return mesh;
+        };
+
+        const ring1 = createRing(7.5, 8.0, Math.PI / 2, 0, 0.5);
+        const ring2 = createRing(8.5, 9.0, Math.PI / 4, Math.PI / 4, 0.4);
+        const ring3 = createRing(9.5, 10.0, -Math.PI / 4, Math.PI / 4, 0.3);
+        
+        // Ánh sáng nổi bật hành tinh
+        const pointLight = new THREE.PointLight('#ffffff', 1.5, 100);
+        pointLight.position.set(10, 10, 10);
+        scene.add(pointLight);
+        
+        const pointLight2 = new THREE.PointLight('#ff69b4', 1, 50);
+        pointLight2.position.set(-10, -5, 10);
+        scene.add(pointLight2);
+        
+        const ambientLight = new THREE.AmbientLight('#9370db', 0.4);
+        scene.add(ambientLight);
+        
+        const data = atob(datacenter.join(''));
+        let clock = new THREE.Clock();
+        console.log(data);
+        
+        let animationStarted = false;
+        
+        window.initGalaxy = function() {
+            if (!animationStarted) {
+                animationStarted = true;
+                clock = new THREE.Clock();
+                
+                // Hiển thị canvas ngay khi init
+                const canvas = document.getElementById('galaxyCanvas');
+                if (canvas) canvas.classList.add('show');
+                
+                // Animate particles gathering from scattered position
+                const particles = p.geometry.attributes.position.array;
+                const originalPositions = new Float32Array(particles);
+                
+                // Scatter particles initially
+                for (let i = 0; i < particles.length; i += 3) {
+                    particles[i] *= 5;
+                    particles[i + 1] *= 5;
+                    particles[i + 2] *= 5;
+                }
+                p.geometry.attributes.position.needsUpdate = true;
+                
+                // Animate gathering
+                let gatherProgress = 0;
+                const gatherAnimation = setInterval(() => {
+                    gatherProgress += 0.02;
+                    if (gatherProgress >= 1) {
+                        clearInterval(gatherAnimation);
+                        for (let i = 0; i < particles.length; i++) {
+                            particles[i] = originalPositions[i];
+                        }
+                    } else {
+                        for (let i = 0; i < particles.length; i++) {
+                            particles[i] = originalPositions[i] * 5 * (1 - gatherProgress) + originalPositions[i] * gatherProgress;
+                        }
+                    }
+                    p.geometry.attributes.position.needsUpdate = true;
+                }, 16);
+                
+                renderer.setAnimationLoop(() => {
+                    controls.update();
+                    let t = clock.getElapsedTime() * 0.5;
+                    gu.time.value = t * Math.PI;
+                    p.rotation.y = t * 0.05;
+                    
+                    // Xoay hành tinh và các hiệu ứng
+                    planet.rotation.y = t * 0.2;
+                    glow.rotation.y = -t * 0.15;
+                    
+                    // Xoay 3 vòng quỹ đạo khác nhau
+                    ring1.rotation.z = t * 0.1;
+                    ring2.rotation.z = -t * 0.15;
+                    ring3.rotation.y = t * 0.12;
+                    
+                    // Pulsating glow effect
+                    glowMaterial.opacity = 0.15 + Math.sin(t * 2) * 0.05;
+                    
+                    renderer.render(scene, camera);
+                });
+            }
+        };
+    </script>
+</body>
+
+</html>
